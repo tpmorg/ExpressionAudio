@@ -45,6 +45,7 @@ fun CameraPreview() {
                     .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
                     .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
                     .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                    .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
                     .build()
             )
 
@@ -101,9 +102,6 @@ fun CameraPreview() {
                     .build()
                 preview.setSurfaceProvider(previewView.surfaceProvider)
 
-                faceOverlay.setCameraSelector(selector)
-                faceOverlay.setPreviewSize(previewView.width, previewView.height)
-
                 val imageAnalysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
@@ -121,6 +119,10 @@ fun CameraPreview() {
                         preview,
                         imageAnalysis
                     )
+
+                    faceOverlay.setCameraSelector(selector)
+                    faceOverlay.setPreviewSize(previewView.width, previewView.height)
+
                 }, ContextCompat.getMainExecutor(context))
 
                 previewView

@@ -4,10 +4,13 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.PointF
 import android.graphics.Rect
 import android.view.View
 import androidx.camera.core.CameraSelector
 import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.face.FaceContour
 import com.google.mlkit.vision.face.FaceLandmark
 
 class FaceOverlay(context: Context) : View(context) {
@@ -16,6 +19,12 @@ class FaceOverlay(context: Context) : View(context) {
     private var previewWidth = 0
     private var previewHeight = 0
     private var isFrontCamera = true
+
+    private val contourPaint = Paint().apply {
+        color = Color.BLUE
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+    }
 
     fun setCameraSelector(selector: CameraSelector) {
         cameraSelector = selector
@@ -48,6 +57,7 @@ class FaceOverlay(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+
         for (face in faces) {
             val bounds = face.boundingBox
             val left = if (isFrontCamera) previewWidth - bounds.right else bounds.left
@@ -65,6 +75,43 @@ class FaceOverlay(context: Context) : View(context) {
             drawLandmark(canvas, face, FaceLandmark.NOSE_BASE)
             drawLandmark(canvas, face, FaceLandmark.MOUTH_LEFT)
             drawLandmark(canvas, face, FaceLandmark.MOUTH_RIGHT)
+
+
+            drawContour(canvas, face, FaceContour.FACE)
+            drawContour(canvas, face, FaceContour.LEFT_EYEBROW_TOP)
+            drawContour(canvas, face, FaceContour.RIGHT_EYEBROW_TOP)
+            drawContour(canvas, face, FaceContour.LEFT_EYE)
+            drawContour(canvas, face, FaceContour.RIGHT_EYE)
+            drawContour(canvas, face, FaceContour.UPPER_LIP_TOP)
+            drawContour(canvas, face, FaceContour.LOWER_LIP_BOTTOM)
+
+
+        }
+    }
+
+    private fun drawContour(canvas: Canvas, face: Face, contourType: Int) {
+        val contour = face.getContour(contourType)
+        contour?.let {
+            val path = Path()
+            var firstPoint: PointF? = null
+
+            for (point in contour.points) {
+                val x = if (isFrontCamera) previewWidth - point.x else point.x
+                val y = point.y
+
+                if (firstPoint == null) {
+                    firstPoint = PointF(x, y)
+                    path.moveTo(x, y)
+                } else {
+                    path.lineTo(x, y)
+                }
+            }
+
+            firstPoint?.let {
+                path.lineTo(it.x, it.y)
+            }
+
+            canvas.drawPath(path, contourPaint)
         }
     }
 
