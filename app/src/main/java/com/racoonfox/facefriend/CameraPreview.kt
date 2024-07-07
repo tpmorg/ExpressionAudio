@@ -9,6 +9,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -27,6 +28,9 @@ fun CameraPreview() {
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val faceOverlay = remember { FaceOverlay(context) }
+
 
     val cameraController = remember {
         LifecycleCameraController(context).apply {
@@ -48,27 +52,36 @@ fun CameraPreview() {
             override fun analyze(imageProxy: ImageProxy) {
                 val mediaImage = imageProxy.image
                 if (mediaImage != null) {
-                    val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                    val image =
+                        InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                     detector.process(image)
                         .addOnSuccessListener { faces ->
                             for (face in faces) {
+
+                                faceOverlay.setFaces(faces)
+
                                 val smileProb = face.smilingProbability
                                 val leftEyeOpenProb = face.leftEyeOpenProbability
                                 val rightEyeOpenProb = face.rightEyeOpenProbability
 
                                 if (smileProb != null) {
-                                    if(smileProb >= 0.5)
+                                    if (smileProb >= 0.5) {
                                         println("it smiled!!!")
-//                                        val intent = Intent(context, SoundGeneratorService::class.java)
-//                                        val frequency = 400.0
-//                                        intent.putExtra(SoundGeneratorService.EXTRA_FREQUENCY, frequency)
-//                                        context.startService(intent)
+                                        val intent =
+                                            Intent(context, SoundGeneratorService::class.java)
+                                        val frequency = 400.0
+                                        intent.putExtra(
+                                            SoundGeneratorService.EXTRA_FREQUENCY,
+                                            frequency
+                                        )
+                                        context.startService(intent)
+                                    }
                                 }
 
                             }
                         }
                         .addOnFailureListener { e ->
-                            // Handle any errors
+
                         }
                         .addOnCompleteListener {
                             imageProxy.close()
@@ -78,38 +91,48 @@ fun CameraPreview() {
         }
     }
 
-    AndroidView(
-        factory = { context ->
-            val previewView = PreviewView(context)
-            val preview = Preview.Builder().build()
-            val selector = CameraSelector.Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
-                .build()
-            preview.setSurfaceProvider(previewView.surfaceProvider)
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { context ->
+                val previewView = PreviewView(context)
+                val preview = Preview.Builder().build()
+                val selector = CameraSelector.Builder()
+                    .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+                    .build()
+                preview.setSurfaceProvider(previewView.surfaceProvider)
 
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also {
-                    it.setAnalyzer(ContextCompat.getMainExecutor(context), faceAnalyzer)
-                }
+                faceOverlay.setCameraSelector(selector)
+                faceOverlay.setPreviewSize(previewView.width, previewView.height)
 
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-            cameraProviderFuture.addListener({
-                val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    context as LifecycleOwner,
-                    selector,
-                    preview,
-                    imageAnalysis
-                )
-            }, ContextCompat.getMainExecutor(context))
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(ContextCompat.getMainExecutor(context), faceAnalyzer)
+                    }
 
-            previewView
-        },
-        onRelease = {
-            cameraController.unbind()
-        }
-    )
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                cameraProviderFuture.addListener({
+                    val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        context as LifecycleOwner,
+                        selector,
+                        preview,
+                        imageAnalysis
+                    )
+                }, ContextCompat.getMainExecutor(context))
+
+                previewView
+            },
+            onRelease = {
+                cameraController.unbind()
+            }
+        )
+        AndroidView(
+            factory = { faceOverlay },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+
 }

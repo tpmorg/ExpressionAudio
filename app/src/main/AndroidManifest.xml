@@ -17,16 +17,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FaceFriend"
-        tools:targetApi="31">
+        >
         <service
             android:name=".SoundGeneratorService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.FaceFriend">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

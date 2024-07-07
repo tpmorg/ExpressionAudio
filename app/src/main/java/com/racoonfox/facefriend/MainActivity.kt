@@ -1,6 +1,5 @@
 package com.racoonfox.facefriend
 
-
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -15,24 +14,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.racoonfox.facefriend.ui.theme.FaceFriendTheme
 import androidx.compose.ui.Alignment
 
-// MainActivity inherits from BaseActivity to utilize its camera permission handling logic
+
 class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Collect the camera permission state as a Compose state to automatically update the UI upon change
             val permissionGranted = isCameraPermissionGranted.collectAsState().value
 
             Box(modifier = Modifier.fillMaxSize()) {
-                // Conditional UI rendering based on camera permission state
                 if (permissionGranted) {
-                    // If permission is granted, display the camera preview
                     CameraPreview()
                 } else {
-                    // If permission is not granted, display a button to request camera permission
                     Button(
                         onClick = {
-                            // Invoke the method from BaseActivity to handle permission request
                             handleCameraPermission()
                         },
                         modifier = Modifier.align(Alignment.Center)
