@@ -1,6 +1,7 @@
 package com.racoonfox.facefriend
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -24,14 +25,11 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 @Composable
 fun CameraPreview() {
 
-    // Obtain the current context and lifecycle owner
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Remember a LifecycleCameraController for this composable
     val cameraController = remember {
         LifecycleCameraController(context).apply {
-            // Bind the LifecycleCameraController to the lifecycleOwner
             bindToLifecycle(lifecycleOwner)
         }
     }
@@ -53,17 +51,18 @@ fun CameraPreview() {
                     val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                     detector.process(image)
                         .addOnSuccessListener { faces ->
-                            // Process the detected faces
                             for (face in faces) {
                                 val smileProb = face.smilingProbability
                                 val leftEyeOpenProb = face.leftEyeOpenProbability
                                 val rightEyeOpenProb = face.rightEyeOpenProbability
 
-                                // ... React to expressions based on the probabilities
-
                                 if (smileProb != null) {
                                     if(smileProb >= 0.5)
                                         println("it smiled!!!")
+//                                        val intent = Intent(context, SoundGeneratorService::class.java)
+//                                        val frequency = 400.0
+//                                        intent.putExtra(SoundGeneratorService.EXTRA_FREQUENCY, frequency)
+//                                        context.startService(intent)
                                 }
 
                             }
@@ -79,7 +78,6 @@ fun CameraPreview() {
         }
     }
 
-    // Key Point: Displaying the Camera Preview
     AndroidView(
         factory = { context ->
             val previewView = PreviewView(context)
@@ -111,7 +109,6 @@ fun CameraPreview() {
             previewView
         },
         onRelease = {
-            // Release the camera controller when the composable is removed from the screen
             cameraController.unbind()
         }
     )
